@@ -450,6 +450,20 @@ void covariant_project_to_suNg(suNg *u)
 
 
 void cooling_SPN(suNg* g_out, suNg* g_in, suNg* g_tilde, int cooling){
+  /**
+   * @brief Cooling algorithm for SP(N) gauge fields applies the beta=infinity limit of the Cabibbo-Mariani algorithm,
+   * which gives the maximum value of Re Tr(g_tilde g_in).
+   * 
+   * We follow the procedure described in https://arxiv.org/pdf/hep-lat/0404008, for the SU(N) case.
+   * 
+   * @param g_out: Pointer to the output gauge field after cooling.
+   * @param g_in: Pointer to the input gauge field before cooling, which is U in Eq. (25) of the reference.
+   * @param g_tilde: Pointer to the input gauge field before cooling, which is \tilde{U} in Eq. (25) of the reference.
+   * @param cooling: Number of cooling iterations to perform.
+   * @note `subgrb` and `subgrb_tau` are helper functions to extract the SU(2) sub-matrices, 
+   * while `vmxsu2` and `vmxsu2_tau` are helper functions to multiply the SU(2) sub-matrices.
+   * See detail explanations in Appendex A of the reference: https://arxiv.org/abs/2010.15781.
+   */
     
     suNgfull B, U_tilde, S;
     _suNg_expand( U_tilde, *g_tilde);
@@ -475,7 +489,20 @@ void cooling_SPN(suNg* g_out, suNg* g_in, suNg* g_tilde, int cooling){
     }
 }
 
+
 void subgrb(int i1col, int i2col, suNgfull* B11, suNgfull* C11){
+  /**
+  * @brief Extracts an SU(2) subgroup from a Sp(N) matrix and applies a transformation.
+  * 
+  * This function targets the SU(2) subgroup defined by the columns `i1col` and `i2col`
+  * of the input Sp(N) matrix `B11`. It constructs an SU(2) of type Eq. (A4) in the paper: https://arxiv.org/abs/2010.15781,
+  * normalizes it, and applies it to both `C11` and `B11` via left multiplication.
+  * 
+  * @param i1col Index of the first column in Sp(N) matrix `B11`.
+  * @param i2col Index of the second column in Sp(N) matrix `B11`.
+  * @param B11 Pointer to the Sp(N) matrix to be updated in-place.
+  * @param C11 Pointer to a Sp(N) matrix also updated by the same SU(2) transformation.
+  */
     
     double complex F11, F12, A11[4], ztmp1, ztmp2;    // A11 is the extracted su2 matrix in 1-d array
     double UMAG;                               // [ 0 1 ]
@@ -509,7 +536,20 @@ void subgrb(int i1col, int i2col, suNgfull* B11, suNgfull* C11){
     vmxsu2(i1col,i2col,B11,A11);
 }
 
+
 void vmxsu2(int i1, int i2, suNgfull* A, double complex B[4]){
+
+  /**
+   * @brief Multiplies columns i1 and i2 of a Sp(N) matrix by a 2×2 SU(2) matrix.
+   *
+   * Applies an SU(2) rotation on columns i1 and i2 of matrix `A`, using matrix `B`
+   * provided in row-major order as a 1D array of 4 complex numbers.
+   * 
+   * @param i1 First column index of Sp(N) matrix A.
+   * @param i2 Second column index of Sp(N) matrix A.
+   * @param A  Pointer to the Sp(N) matrix.
+   * @param B  SU(2) matrix in vector form: {B00, B01, B10, B11}.
+   */
     
     double complex C[NG*2];
     double complex ztmp1,ztmp2;
@@ -530,7 +570,21 @@ void vmxsu2(int i1, int i2, suNgfull* A, double complex B[4]){
     }
 }
 
+
 void subgrb_tau(int n1, int n2, suNgfull* B11, suNgfull* C11){
+
+  /**
+   * @brief Applies an SU(2) tau-subgroup transformation that mixes upper and lower blocks of Sp(N).
+   *
+   * Constructs a SU(2) matrix of type Eq. (A5) in the paper: https://arxiv.org/abs/2010.15781,
+   * 
+   * Applies the resulting SU(2) matrix to both `B11` and `C11`.
+   *
+   * @param n1 Index in upper block.
+   * @param n2 Index in lower block.
+   * @param B11 Matrix B = S \tilde{U}^\dagger, used to generate the SU(2) transformation.
+   * @param C11 Matrix S, updated with the transformation.
+   */
     
     double complex F11, F12, A11[4], ztmp1, ztmp2;    // A11 is the extracted su2 matrix in 1-d array
     double UMAG;                               // [ 0 1 ]
@@ -563,7 +617,21 @@ void subgrb_tau(int n1, int n2, suNgfull* B11, suNgfull* C11){
     vmxsu2_tau(n1, n2, B11, A11);
 }
 
+
 void vmxsu2_tau(int n1, int n2, suNgfull* A, complex B[4]){
+
+  /**
+   * @brief Applies a (A5)-type SU(2) transformation to a Sp(N) matrix.
+   *
+   * Performs the matrix update defined by a (A5)-type SU(2) matrix.
+   * A temporary copy is used to safely apply the transformation to four sub-blocks:
+   * (n1, n1), (n2, n2), (NG/2+n1, NG/2+n1), and (NG/2+n2, NG/2+n2).
+   * 
+   * @param n1 Index in upper block.
+   * @param n2 Index in lower block.
+   * @param A  Pointer to the Sp(N) matrix to be transformed.
+   * @param B  SU(2) matrix in row-major form.
+   */
     
     suNgfull C;
     double complex ztmp1, ztmp2;
