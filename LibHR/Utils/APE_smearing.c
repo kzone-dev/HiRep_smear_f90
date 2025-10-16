@@ -36,9 +36,8 @@ void APE_smearing(double smear_val, int Nsmear){
     int mu, nu, mid, midpmu, midpnu, midmnu, midpmumnu;
     suNg v, vout, vtmp;
     
-    double sm1 = 1.; //- smear_val;  // ( 1 - \alpha )
-    double sm2 = smear_val; /// 4. ; // ( \alpha \ 6 )
-                                  
+    double sm1 = 1. - smear_val;  // ( 1 - \alpha )
+    double sm2 = smear_val / 6. ; // ( \alpha \ 6 )
     
     suNg_field *u_gauge_tmp = alloc_gfield(&glattice);
     u_gauge_APE = alloc_gfield(&glattice);
@@ -102,9 +101,11 @@ void APE_smearing(double smear_val, int Nsmear){
                     project_to_suNg(&vout); // Project to the group manifold
                     
                     #ifdef GAUGE_SPN
-                    cooling_SPN(&v, &vout, &vtmp, 6); // max Re Tr(U V^+)
+                    cooling_SPN(&v, &vout, &vtmp, 5); // max Re Tr(U V^+)
                     *pu_gauge_tmp(mid, mu) = v;
+                    
                     #else
+                    
                     *pu_gauge_tmp(mid, mu) = vout;
                     
                     #endif
